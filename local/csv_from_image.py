@@ -146,8 +146,10 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--image_path', type=str, required=True, help='Path to image (or folder)')
     args = parser.parse_args()
     
+    sleep_time_raw = os.getenv("Sleep_Time")
+    
     try:
-        sleep_time = int(input("Enter sleep time (default = 5)"))
+        sleep_time = int(sleep_time_raw)
     except ValueError:
         sleep_time = 5
     print(f"Sleep time set to {sleep_time} ")
