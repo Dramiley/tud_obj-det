@@ -1,0 +1,5 @@
+Run container:
+docker run -ti -v C:\Users\Morge\UniProgrammieren\AI\input:/input run_detection
+
+Load Image:
+docker load -i <path to copied image file.tar>

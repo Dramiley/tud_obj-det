@@ -1,0 +1,49 @@
+item {
+    id: 1
+    name: 'Abdeckung'
+}
+
+item {
+    id: 2
+    name: 'Anschluss'
+}
+
+item {
+    id: 3
+    name: 'Auflageflaeche'
+}
+
+item {
+    id: 4
+    name: 'Gewinde'
+}
+
+item {
+    id: 5
+    name: 'Hebel'
+}
+
+item {
+    id: 6
+    name: 'Lampe'
+}
+
+item {
+    id: 7
+    name: 'Motor'
+}
+
+item {
+    id: 8
+    name: 'Schalter'
+}
+
+item {
+    id: 9
+    name: 'Schleifscheibe'
+}
+
+item {
+    id: 10
+    name: 'Sicherung'
+}
