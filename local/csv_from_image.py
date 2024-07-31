@@ -7,6 +7,7 @@ from io import BytesIO
 import glob
 import matplotlib.pyplot as plt
 import time
+import requests
 
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
@@ -49,7 +50,6 @@ def load_image_into_numpy_array(path):
 def run_inference_for_single_image(model, image, path):
     # The input needs to be a tensor, convert it using `tf.convert_to_tensor`.
     input_tensor = tf.convert_to_tensor(image)
-    # The model expects a batch of images, so add an axis with `tf.newaxis`.
     input_tensor = input_tensor[tf.newaxis, ...]
 
     # Run inference
@@ -75,24 +75,38 @@ def run_inference_for_single_image(model, image, path):
         detection_masks_reframed = tf.cast(detection_masks_reframed > 0.5, tf.uint8)
         output_dict['detection_masks_reframed'] = detection_masks_reframed.numpy()
 
+    # Save sorted output to csv
     df = output_to_csv(output_dict)
     df.to_csv(f'{path}.csv')
     print(f"Saved {path}.csv")
+    
+    # Send csv to server if needed
+    if server_needed:
+        files = {'file': open(f'{path}.csv', 'rb')}
+        x = requests.post(url, files=files)
+        print(x.status_code)
+        print(x.text)
+
     return df
 
 
 def output_to_csv(od):
+    
+    # Set minimum detection score
     min_score = 0.5
+    # Remove unnecessary keys
     remove_keys = ['raw_detection_scores', 'raw_detection_boxes', 'detection_multiclass_scores', 'detection_anchor_indices', 'num_detections']
     for key in remove_keys:
         od.pop(key)
     above_min = 0
+    # Count number of detections above min_score
     for score in od['detection_scores']:
         if score >= min_score:
             above_min+=1
         else:
             break
-          
+    
+    # Remove low score detections, add class names and convert to pixel coordinates
     i = above_min  
     classes, x_min, y_min, x_max, y_max = [], [], [], [], []
     for box in od['detection_boxes']:
@@ -114,6 +128,7 @@ def output_to_csv(od):
     
     od.pop('detection_boxes')
     od.pop('detection_classes')
+    # Create DataFrame for csv
     df = pd.DataFrame(od).head(len(y_max))
     df['class'] = classes
     df['x min'] = x_min
@@ -123,6 +138,8 @@ def output_to_csv(od):
     
     return df
 def run_inference(model, category_index, image_path):
+    
+    # Load images
     if os.path.isdir(image_path):
         image_paths = []
         for file_extension in ('*.png', '*jpg'):
@@ -135,41 +152,59 @@ def run_inference(model, category_index, image_path):
         i = 0
         for i_path in image_paths:
             image_np = load_image_into_numpy_array(i_path)
-            # Actual detection.
+            # Actual detection
             output_dict = run_inference_for_single_image(model, image_np, i_path)
 
 
 if __name__ == '__main__':
+    # Parse arguments
     parser = argparse.ArgumentParser(description='Detect objects inside webcam videostream')
     parser.add_argument('-m', '--model', type=str, required=True, help='Model Path')
     parser.add_argument('-l', '--labelmap', type=str, required=True, help='Path to Labelmap')
     parser.add_argument('-i', '--image_path', type=str, required=True, help='Path to image (or folder)')
     args = parser.parse_args()
     
+    # Load environment variables
     sleep_time_raw = os.getenv("Sleep_Time")
+    server_needed = True
+    url = os.getenv("URL")
     
+    # Verify if server is needed
+    if url is None or url == "":
+        server_needed = False
+        print("No server URL provided")
+    else: print("loaded Server URL: ", url)
+    
+    # Verify sleep time
     try:
         sleep_time = int(sleep_time_raw)
     except ValueError:
         sleep_time = 5
     print(f"Sleep time set to {sleep_time} ")
 
+    # Load model
     print("loading model")
     detection_model = load_model(args.model)
     
+    # Load labelmap
     print("loading labelmap")
     category_index = label_map_util.create_category_index_from_labelmap(args.labelmap, use_display_name=True)
     
     print("running inference")
     print("Press Ctrl+C to stop the script")
+    
+    # Main loop
     try:
         while True:
+            
+            # Run inference
             run_inference(detection_model, category_index, args.image_path)
             time.sleep(sleep_time)
     except KeyboardInterrupt:
+        # Stop script
         print("Script stopped by user")
         pass
     
 
 # Command to start script
-#  python .\detect_from_images.py -m ssd_mobilenet_v2_320x320_coco17_tpu-8\saved_model -l .\data\mscoco_label_map.pbtxt -i .\test_images
+#  python csv_from_image.py -m .\saved_model -l .\label_map.pbtxt -i .\test_images
