@@ -50,6 +50,7 @@ def load_image_into_numpy_array(path):
 def run_inference_for_single_image(model, image, path):
     # The input needs to be a tensor, convert it using `tf.convert_to_tensor`.
     input_tensor = tf.convert_to_tensor(image)
+    # The model expects a batch of images, so add an axis with `tf.newaxis`.
     input_tensor = input_tensor[tf.newaxis, ...]
 
     # Run inference
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     # Verify sleep time
     try:
         sleep_time = int(sleep_time_raw)
-    except ValueError:
+    except ValueError or TypeError:
         sleep_time = 5
     print(f"Sleep time set to {sleep_time} ")
 
