@@ -177,10 +177,13 @@ if __name__ == '__main__':
     else: print("loaded Server URL: ", url)
     
     # Verify sleep time
-    try:
-        sleep_time = int(sleep_time_raw)
-    except ValueError or TypeError:
+    if sleep_time_raw is None or sleep_time_raw == "":
         sleep_time = 5
+    else:
+        try:
+            sleep_time = int(sleep_time_raw)
+        except ValueError:
+            sleep_time = 5
     print(f"Sleep time set to {sleep_time} ")
 
     # Load model
