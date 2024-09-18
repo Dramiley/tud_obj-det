@@ -5,15 +5,15 @@ import tensorflow as tf
 from PIL import Image # Pillow
 from io import BytesIO
 import glob
-import matplotlib.pyplot as plt
 import time
 import requests
+import pandas as pd
+
+#os.chdir( 'D:\\projects\\data core\\helmet detection\\models\\research\\object_detection' )
 
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
-from object_detection.utils import visualization_utils as vis_util
 
-import pandas as pd
 
 # patch tf1 into `utils.ops`
 utils_ops.tf = tf.compat.v1
@@ -159,7 +159,7 @@ def run_inference(model, category_index, image_path):
 
 if __name__ == '__main__':
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Detect objects inside webcam videostream')
+    parser = argparse.ArgumentParser(description='Detect objects inside image')
     parser.add_argument('-m', '--model', type=str, required=True, help='Model Path')
     parser.add_argument('-l', '--labelmap', type=str, required=True, help='Path to Labelmap')
     parser.add_argument('-i', '--image_path', type=str, required=True, help='Path to image (or folder)')
