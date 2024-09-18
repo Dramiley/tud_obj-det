@@ -12,7 +12,7 @@ app.logger.setLevel(logging.DEBUG)
   
   
 @app.route("/objectdetection", methods=['POST'])
-def test_method():         
+def safe_image():         
     # print(request.json)      
     if not request.json or 'image' not in request.json: 
         abort(400)
@@ -31,8 +31,7 @@ def test_method():
 
     result_dict = {'result': 'success'}
     return result_dict
-  
-  
+ 
 def run_server_api():
     app.run(host='0.0.0.0', port=8080)
   
