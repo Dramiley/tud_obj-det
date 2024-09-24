@@ -143,18 +143,26 @@ def run_inference(model, category_index, image_path):
     # Load images
     if os.path.isdir(image_path):
         image_paths = []
+        csv_paths = []
         for file_extension in ('*.png', '*jpg'):
             image_paths.extend(glob.glob(os.path.join(image_path, file_extension)))
+        # Load existing csv files
+        for file_extension in ('*.csv'):
+            csv_paths.extend(glob.glob(os.path.join(image_path, file_extension)))
         
         if image_paths == []:
             print("No images found")
 
-        """add iterator here"""
-        i = 0
-        for i_path in image_paths:
             image_np = load_image_into_numpy_array(i_path)
             # Actual detection
             output_dict = run_inference_for_single_image(model, image_np, i_path)
+        
+        i = 0
+        for i_path in image_paths:
+            if (not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv")):
+                image_np = load_image_into_numpy_array(i_path)
+                # Actual detection
+                output_dict = run_inference_for_single_image(model, image_np, i_path)
 
 
 if __name__ == '__main__':
@@ -178,12 +186,12 @@ if __name__ == '__main__':
     
     # Verify sleep time
     if sleep_time_raw is None or sleep_time_raw == "":
-        sleep_time = 5
+        sleep_time = 1
     else:
         try:
             sleep_time = int(sleep_time_raw)
         except ValueError:
-            sleep_time = 5
+            sleep_time = 1
     print(f"Sleep time set to {sleep_time} ")
 
     # Load model

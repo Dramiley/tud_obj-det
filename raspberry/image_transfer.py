@@ -3,6 +3,9 @@ import configparser
 import base64
 import json
 from time import sleep
+import uuid
+import os
+import pandas as pd
 
 def read_config():
     # Create a ConfigParser object
@@ -22,7 +25,18 @@ def read_config():
     }
  
     return config_values
-    
+
+def get_uuid():
+    device_id = str(uuid.uuid1())
+    if not os.path.isfile("uuid.txt"):
+        with open("uuid.txt", "w") as file:
+            file.write(device_id)
+            file.close()
+    else:
+        with open("uuid.txt", "r") as file:
+            device_id = file.read()
+            file.close()
+    return device_id
 
 if __name__ == '__main__':
     print("Starting script")
@@ -33,6 +47,9 @@ if __name__ == '__main__':
     sleep_time = config_data['sleep_time']
     server_url = config_data['server_url']
     print("Configuration read")
+    
+    device_id = get_uuid()
+    print("Generated device id: ", device_id)
    
     print("Press Ctrl+C to stop the script")
     
@@ -46,11 +63,13 @@ if __name__ == '__main__':
             
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
   
-            payload = json.dumps({"image": im_b64})
+            payload = json.dumps({"image": im_b64, "device_id": device_id})
             response = requests.post(server_url, data=payload, headers=headers)
             try:
                 data = response.json()     
-                print(data)                
+                df = pd.DataFrame(data)   
+                df.to_csv(f"image.csv", index=False)
+                print("csv received")     
             except requests.exceptions.RequestException:
                 print(response.text)
             
