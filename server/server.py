@@ -44,6 +44,17 @@ def safe_image():
     
     return csvFile.to_json(orient='records')
  
+@app.route("/error", methods=['POST'])
+def print_error():
+    if not request.json or 'error' not in request.json or 'device_id' not in request.json: 
+        abort(400)
+    error = request.json['error']
+    device_id = request.json['device_id']
+    
+    print(f"Error: {error} for device {device_id}")
+    return "Error received"
+    
+     
 def run_server_api():
     app.run(host='0.0.0.0', port=8080)
   

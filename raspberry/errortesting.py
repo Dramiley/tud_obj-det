@@ -2,17 +2,25 @@ import requests
 import configparser
 import base64
 import json
+#from picamera2 import Picamera2
 from time import sleep
 import uuid
 import os
 import pandas as pd
+from PIL import Image
+
 
 def read_config():
     # Create a ConfigParser object
     config = configparser.ConfigParser()
  
     # Read the configuration file
-    config.read('config.ini')
+    try:
+        config.read('config.ini')
+    except Exception as e:
+        print("Error reading config file: ", e)
+        print("You need to add a config.ini file in the volume")
+        exit()
  
     # Access values from the configuration file
     sleep_time = config.getint('General','sleep_time')
@@ -25,7 +33,7 @@ def read_config():
     }
  
     return config_values
-
+    
 def get_uuid():
     device_id = str(uuid.uuid1())
     if not os.path.isfile("uuid.txt"):
@@ -37,6 +45,7 @@ def get_uuid():
             device_id = file.read()
             file.close()
     return device_id
+
 
 if __name__ == '__main__':
     print("Starting script")
@@ -51,11 +60,26 @@ if __name__ == '__main__':
     device_id = get_uuid()
     print("Generated device id: ", device_id)
    
+   
     print("Press Ctrl+C to stop the script")
     
+    # Configure camera
+    #picam2 = Picamera2()
+    #pic_config = picam2.create_still_configuration({"size": (3280, 2464)})
+    #picam2.configure(pic_config)
+    #picam2.start()
     # Main loop
     try:
         while True:
+            # Take photo
+            picam2.capture_file("image.jpg")
+            
+            #TODO in testing
+            image = Image.open('image.jpg')
+            new_image = image.resize((512, 512))
+            new_image.save('image.jpg')
+            
+            
             # Send image to server
             with open("image.jpg", "rb") as f:
                 im_bytes = f.read()        
@@ -69,7 +93,7 @@ if __name__ == '__main__':
                 data = response.json()     
                 df = pd.DataFrame(data)   
                 df.to_csv(f"image.csv", index=False)
-                print("csv received")     
+                print("csv received")                  
             except requests.exceptions.RequestException:
                 print(response.text)
             
@@ -82,5 +106,7 @@ if __name__ == '__main__':
     
     except Exception as e:
         print("An error occurred: ", e)
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         errormessage = requests.post(f''+server_url+'/error', data=json.dumps({"device_id": device_id, "error": str(e)}), headers=headers)
         pass
+    

@@ -152,17 +152,13 @@ def run_inference(model, category_index, image_path):
         
         if image_paths == []:
             print("No images found")
-
-            image_np = load_image_into_numpy_array(i_path)
-            # Actual detection
-            output_dict = run_inference_for_single_image(model, image_np, i_path)
         
-        i = 0
-        for i_path in image_paths:
-            if (not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv")):
-                image_np = load_image_into_numpy_array(i_path)
-                # Actual detection
-                output_dict = run_inference_for_single_image(model, image_np, i_path)
+        else:
+            for i_path in image_paths:
+                if (not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv")):
+                    image_np = load_image_into_numpy_array(i_path)
+                    # Actual detection
+                    output_dict = run_inference_for_single_image(model, image_np, i_path)
 
 
 if __name__ == '__main__':
