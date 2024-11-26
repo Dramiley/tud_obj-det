@@ -8,11 +8,14 @@ import glob
 import time
 import requests
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #os.chdir( 'D:\\projects\\data core\\helmet detection\\models\\research\\object_detection' )
 
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
+from object_detection.utils import visualization_utils as vis_util
+
 
 
 # patch tf1 into `utils.ops`
@@ -75,18 +78,28 @@ def run_inference_for_single_image(model, image, path):
             image.shape[0], image.shape[1])
         detection_masks_reframed = tf.cast(detection_masks_reframed > 0.5, tf.uint8)
         output_dict['detection_masks_reframed'] = detection_masks_reframed.numpy()
+    
+    # Safe image to server
+    vis_util.visualize_boxes_and_labels_on_image_array(
+                image,
+                output_dict['detection_boxes'],
+                output_dict['detection_classes'],
+                output_dict['detection_scores'],
+                category_index,
+                instance_masks=output_dict.get('detection_masks_reframed', None),
+                use_normalized_coordinates=True,
+                line_thickness=8)
+    """The existing plt lines do not work on local pc as they are not setup for GUI
+    Use plt.savefig() to save the results instead and view them in a folder"""
+    plt.imshow(image)
+    plt.savefig(f"{path}_boxes.png") 
+    print(f"Saved {path}_boxes.png")
 
     # Save sorted output to csv
     df = output_to_csv(output_dict)
     df.to_csv(f'{path}.csv')
     print(f"Saved {path}.csv")
     
-    # Send csv to server if needed
-    if server_needed:
-        files = {'file': open(f'{path}.csv', 'rb')}
-        x = requests.post(url, files=files)
-        print(x.status_code)
-        print(x.text)
 
     return df
 
@@ -144,7 +157,7 @@ def run_inference(model, category_index, image_path):
     if os.path.isdir(image_path):
         image_paths = []
         csv_paths = []
-        for file_extension in ('*.png', '*jpg'):
+        for file_extension in ('*.png','*.jpg'):
             image_paths.extend(glob.glob(os.path.join(image_path, file_extension)))
         # Load existing csv files
         for file_extension in ('*.csv'):
@@ -154,8 +167,9 @@ def run_inference(model, category_index, image_path):
             print("No images found")
         
         else:
-            for i_path in image_paths:
-                if (not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv")):
+            for i_path in image_paths: 
+                # Check if csv file exists or image has been modified since last detection AND is not a detection image
+                if (not '_boxes.png' in i_path) and ((not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv"))):
                     image_np = load_image_into_numpy_array(i_path)
                     # Actual detection
                     output_dict = run_inference_for_single_image(model, image_np, i_path)
@@ -171,14 +185,6 @@ if __name__ == '__main__':
     
     # Load environment variables
     sleep_time_raw = os.getenv("Sleep_Time")
-    server_needed = True
-    url = os.getenv("URL")
-    
-    # Verify if server is needed
-    if url is None or url == "":
-        server_needed = False
-        print("No server URL provided")
-    else: print("loaded Server URL: ", url)
     
     # Verify sleep time
     if sleep_time_raw is None or sleep_time_raw == "":
