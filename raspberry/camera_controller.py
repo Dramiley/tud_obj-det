@@ -10,6 +10,7 @@ import pandas as pd
 from PIL import Image
 
 
+
 def read_config():
     # Create a ConfigParser object
     config = configparser.ConfigParser()

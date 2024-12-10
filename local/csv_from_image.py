@@ -100,6 +100,9 @@ def run_inference_for_single_image(model, image, path):
     df.to_csv(f'{path}.csv')
     print(f"Saved {path}.csv")
     
+    # Generate blank image with boxes
+    os.system("python generate_box_image.py -tc blue -bc red -r True")
+    
 
     return df
 
@@ -169,7 +172,7 @@ def run_inference(model, category_index, image_path):
         else:
             for i_path in image_paths: 
                 # Check if csv file exists or image has been modified since last detection AND is not a detection image
-                if (not '_boxes.png' in i_path) and ((not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv"))):
+                if (not '_boxes.png' in i_path) and (not '_out.png' in i_path) and ((not f"{i_path}.csv" in csv_paths) or (os.path.getmtime(i_path) > os.path.getmtime(f"{i_path}.csv"))):
                     image_np = load_image_into_numpy_array(i_path)
                     # Actual detection
                     output_dict = run_inference_for_single_image(model, image_np, i_path)
