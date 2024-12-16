@@ -100,10 +100,6 @@ def run_inference_for_single_image(model, image, path):
     df.to_csv(f'{path}.csv')
     print(f"Saved {path}.csv")
     
-    # Generate blank image with boxes
-    os.system("python generate_box_image.py -tc blue -bc red -r True")
-    
-
     return df
 
 

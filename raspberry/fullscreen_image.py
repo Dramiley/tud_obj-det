@@ -6,32 +6,44 @@ if sys.version_info[0] == 2:  # the tkinter library changed it's name from Pytho
 else:
     import tkinter
 from PIL import Image, ImageTk
+import requests
+import json
+import pygame
+import time
 
-def showPIL(pilImage):
-    root = tkinter.Tk()
-    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.overrideredirect(1)
-    root.geometry("%dx%d+0+0" % (w, h))
-    root.focus_set()    
-    root.bind("<Escape>", lambda e: (e.widget.withdraw(), e.widget.quit()))
-    canvas = tkinter.Canvas(root,width=w,height=h)
-    canvas.pack()
-    canvas.configure(background='black')
-    imgWidth, imgHeight = pilImage.size
-    if imgWidth > w or imgHeight > h:
-        ratio = min(w/imgWidth, h/imgHeight)
-        imgWidth = int(imgWidth*ratio)
-        imgHeight = int(imgHeight*ratio)
-        pilImage = pilImage.resize((imgWidth,imgHeight))
-    image = ImageTk.PhotoImage(pilImage)
-    imagesprite = canvas.create_image(w/2,h/2,image=image)
-    root.mainloop()
+class FullscreenImage:
     
-if __name__ == '__main__':
-    last_shown = 0
-    while True:
-        if last_shown < os.path.getmtime("image.jpg_out.png"):
-            last_shown = os.path.getmtime("image.jpg_out.png")
-            image = Image.open('image.jpg_out.png')
-            showPIL(image)
+    def __init__(self, device_id, server_url):
+        self.device_id = device_id
+        self.server_url = server_url
+    
+    def showPIL(self, pilImage):
+        root = tkinter.Tk()
+        w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+        root.overrideredirect(1)
+        root.geometry("%dx%d+0+0" % (w, h))
+        root.focus_set()    
+        root.bind("<Escape>", lambda e: (e.widget.withdraw(), e.widget.quit()))
+        canvas = tkinter.Canvas(root,width=w,height=h)
+        canvas.pack()
+        canvas.configure(background='black')
+        imgWidth, imgHeight = pilImage.size
+        if imgWidth > w or imgHeight > h:
+            ratio = min(w/imgWidth, h/imgHeight)
+            imgWidth = int(imgWidth*ratio)
+            imgHeight = int(imgHeight*ratio)
+            pilImage = pilImage.resize((imgWidth,imgHeight))
+        image = ImageTk.PhotoImage(pilImage)
+        imagesprite = canvas.create_image(w/2,h/2,image=image)
+        root.mainloop()
         
+class imageFullscreen:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.screen.fill((0, 0, 0))
+        
+    def updateImage(self, pilImage):
+        image = pygame.image.fromstring(pilImage.tobytes(), pilImage.size, pilImage.mode).convert()
+        self.screen.blit(image, (0, 0))
+        pygame.display.update()
