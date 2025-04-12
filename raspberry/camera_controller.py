@@ -16,6 +16,7 @@ else:
 from PIL import Image, ImageTk
 from fullscreen_image import imageFullscreen
 from generate_box_image import boxDrawer
+from image_checker import ImageChecker
 
 def read_config():
     # Create a ConfigParser object
@@ -35,6 +36,8 @@ def read_config():
     box_color = config.get('General','box_color')
     text_color = config.get('General','text_color')
     resize = config.getboolean('General','resize')
+    check_brightness = config.getboolean('General','check_brightness')
+    check_blur = config.getboolean('General','check_blur')
     
     # Return a dictionary with the retrieved values
     config_values = {
@@ -42,7 +45,9 @@ def read_config():
         'server_url': server_url,
         'box_color': box_color,
         'text_color': text_color,
-        'resize': resize
+        'resize': resize,
+        'check_brightness': check_brightness,
+        'check_blur': check_blur
     }
  
     return config_values
@@ -71,6 +76,8 @@ if __name__ == '__main__':
     box_color = config_data['box_color']
     text_color = config_data['text_color']
     resize = config_data['resize']
+    check_brightness = config_data['check_brightness']
+    check_blur = config_data['check_blur']
     print("Configuration read")
     
     device_id = get_uuid()
@@ -92,6 +99,9 @@ if __name__ == '__main__':
     # Create fullscreen image object
     image_Fullscreen = imageFullscreen()
     
+    # Create image checker object, with min and max brightness, may need to be adjusted
+    image_checker = ImageChecker(50, 200, 70)
+    
     try:
         while True:
             # Take photo
@@ -102,16 +112,30 @@ if __name__ == '__main__':
             new_image = image.resize((512, 512))
             new_image.save('image.jpg')
             
-            
             # Send image to server
             with open("image.jpg", "rb") as f:
                 im_bytes = f.read()        
             im_b64 = base64.b64encode(im_bytes).decode("utf8")
-            
+                    
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-  
-            payload = json.dumps({"image": im_b64, "device_id": device_id})
+                   
+            warning = ""
             
+            # Nested if statements to only check brightness and blur if the config is set to true
+            if check_brightness:
+                # Check brightness of image
+                cb = image_checker.checkBrightness(new_image)
+                if not cb[0]:
+                    if cb[1] < 150: 
+                        warning = "Image is too dark, reposition the camera! "
+                    else:
+                        warning = "Image is too bright, reposition the camera! "
+            if check_blur:
+                if not image_checker.checkBlurry(new_image):
+                    warning += "Image is too blurry, don't move the camera!"
+        
+            payload = json.dumps({"image": im_b64, "device_id": device_id, "warnings": warning})
+                    
             # recieve respond and csv
             response = requests.post(f''+server_url+'/objectdetection', data=payload, headers=headers)
             try:
@@ -121,11 +145,13 @@ if __name__ == '__main__':
                 print("csv received")                  
             except requests.exceptions.RequestException:
                 print(response.text)
-            
+                    
+            # Check if new csv is available, if so, draw the boxes and display the image
             if box_drawer.check_new_csv():
                 box_drawer.run('image.csv')
                 image_Fullscreen.updateImage(Image.open('image.csv_out.png'))
-            
+                
+            # Sleep after each iteration
             sleep(sleep_time)
            
     except KeyboardInterrupt:

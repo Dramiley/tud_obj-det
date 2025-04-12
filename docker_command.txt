@@ -1,5 +1,5 @@
 Run container:
-docker run -e Sleep_Time="5" -ti -v <path to input folder>:/input run_detection2
+docker run -ti -v C:\Users\Morge\UniProgrammieren\AI\tud_obj-det\server\input:/input dramiley/run_detection
 
 Load Image:
 docker load -i <path to copied image file.tar>

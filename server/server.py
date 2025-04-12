@@ -26,6 +26,9 @@ def safe_image():
     
     # get the device id
     device_id = request.json['device_id']
+    
+    # get warnings
+    warnings = request.json['warnings']
 
     # convert it into bytes  
     img_bytes = base64.b64decode(im_b64.encode('utf-8'))
@@ -34,9 +37,11 @@ def safe_image():
     img = Image.open(io.BytesIO(img_bytes))
 
     # save the image
-    img.save(f'input/{device_id}.jpg')    
-
-    result_dict = {'result': 'success'}
+    img.save(f'input/{device_id}.jpg')  
+    
+    # print the warnings
+    if warnings != "":
+        print(f"Warning: {warnings} for device {device_id}") 
     
     while not f'{device_id}.jpg.csv' in os.listdir('input') or (os.path.getmtime(f"input/{device_id}.jpg") > os.path.getmtime(f"input/{device_id}.jpg.csv")):
         sleep(1)
