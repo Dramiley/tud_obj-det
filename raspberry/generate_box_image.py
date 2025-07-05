@@ -7,6 +7,7 @@ import glob
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
+import random
 
 import PIL.Image as Image
 import PIL.ImageColor as ImageColor
@@ -25,12 +26,14 @@ class boxDrawer:
         
 # modified function from object_detection.utils.visualization_utils
     def draw_bounding_box_with_text(self,image, xmin, xmax, ymin, ymax, thickness, display_str_list):
-        box=[xmin, xmax, ymin, ymax]
+        box_color = random.choice(["red", "green", "blue", "purple", "orange"])
+        box=[xmin, ymin, xmax, ymax]
         draw = ImageDraw.Draw(image)
         im_width, im_height = image.size
         (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
-        draw.line([(left, top), (left, bottom), (right, bottom),
-        (right, top), (left, top)], width=thickness, fill=self.box_color)
+        #draw.line([(left, top), (left, bottom), (right, bottom),
+        #(right, top), (left, top)], width=thickness, fill=self.box_color)
+        draw.rectangle(box, outline=box_color, width=thickness, fill=box_color)
         try:
             font = ImageFont.truetype('arial.ttf', 18)
         except IOError:
@@ -42,21 +45,31 @@ class boxDrawer:
             #text_width, text_height = font.getsize(display_str)
             (temp1,temp2, text_width,text_height) = font.getbbox(display_str)
             margin = np.ceil(0.05 * text_height)
-            #draw.rectangle(
-            #    [(left, text_bottom - text_height - 2 * margin), (left + text_width,
-            #                                                  text_bottom)],
-            #    fill=color)
-            draw.text(
-                (left + margin, text_bottom - text_height - margin),
+            check = False
+            while check == False:
+                (x0,y0,x1,y1) = draw.textbbox([left + margin, (top + bottom) / 2],
+                display_str,
+                font=font)
+                if x0 >= left and x1 + margin <= right:
+                    check = True
+                else:
+                    font = ImageFont.truetype('arial.ttf', font.size - 1)
+                    
+            draw.text([left + margin, (top + bottom) / 2],
                 display_str,
                 fill=self.text_color,
                 font=font)
+            #draw.text(
+            #    (left + margin, text_bottom - text_height - margin),
+            #    display_str,
+            #    fill=self.text_color,
+            #    font=font)
             text_bottom -= text_height - 2 * margin
             
             avg_x = (xmin + xmax) / 2
             avg_y = (ymin + ymax) / 2
             size = 2
-            draw.rectangle(((avg_x - size, avg_y - size), (avg_x + size, avg_y + size)), outline=self.box_color, fill=self.box_color)
+            #draw.rectangle(((avg_x - size, avg_y - size), (avg_x + size, avg_y + size)), outline=self.box_color, fill=self.box_color)
         
     def check_new_csv(self):
         if os.path.isfile("image.csv"):
@@ -67,7 +80,6 @@ class boxDrawer:
 
     def run(self, csv_path):
         image = Image.new('RGB', (512, 512), (0, 0, 0))
-            
         try:
             df = pd.read_csv(csv_path)
             df.columns = ['numbers','detection_scores','class', 'x min', 'y min', 'x max', 'y max']
@@ -93,3 +105,12 @@ class boxDrawer:
         image.save(f'{csv_path}_out.png')
         
     
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate box image from csv file')
+    parser.add_argument('--text_color', type=str, default='white', help='Color of the text')
+    
+    args = parser.parse_args()
+    
+    drawer = boxDrawer("Test", None, None, args.text_color, True)
+    drawer.run('image.csv')

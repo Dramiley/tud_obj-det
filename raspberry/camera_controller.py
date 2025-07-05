@@ -17,6 +17,7 @@ from PIL import Image, ImageTk
 from fullscreen_image import imageFullscreen
 from generate_box_image import boxDrawer
 from image_checker import ImageChecker
+from camera_adjuster import CameraAdjuster
 
 def read_config():
     # Create a ConfigParser object
@@ -85,6 +86,36 @@ if __name__ == '__main__':
    
    
     print("Press Ctrl+C to stop the script")
+                    
+    print("Waiting for server to start...")
+    # recieve respond choice (camera controller or camera adjuster)
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    payload = json.dumps({"started": True, "device_id": device_id})
+    response = requests.post(f''+server_url+'/started', data=payload, headers=headers)
+    choice = response.text
+    
+    if choice == '1':
+        print("Starting Camera Controller...")
+        
+    elif choice == '2':
+        try:
+            print("Starting Camera Adjuster...")
+            camera_adjuster = CameraAdjuster(resize)
+            camera_adjuster.adjust_camera()
+            try: 
+                while camera_adjuster.status:
+                    sleep(10)
+            except KeyboardInterrupt:
+                camera_adjuster.status = False
+                exit()
+        except Exception as e:
+            print("An error occurred while starting the Camera Adjuster: ", e)
+            headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+            errormessage = requests.post(f''+server_url+'/error', data=json.dumps({"device_id": device_id, "error": str(e)}), headers=headers)
+            sleep(100)
+            
+    else:
+        print("Invalid choice, starting Camera Controller on default...")
     
     # Configure camera
     picam2 = Picamera2()
@@ -157,11 +188,14 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         # Stop script
         print("Script stopped by user")
-        pass
+        image_Fullscreen.close()
+        exit()
     
     except Exception as e:
         print("An error occurred: ", e)
+        image_Fullscreen.close()
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         errormessage = requests.post(f''+server_url+'/error', data=json.dumps({"device_id": device_id, "error": str(e)}), headers=headers)
-        pass
+        sleep(100)
+        exit()
     

@@ -1,0 +1,7 @@
+,detection_scores,class,x min,y min,x max,y max 
+0,0.99522185,Sicherung,169,265,219,313
+1,0.98621166,Schleifscheibe,309,109,386,200
+2,0.9519511,Schleifscheibe,92,107,167,225
+3,0.89858717,Lampe,204,54,322,101
+4,0.62035394,Schalter,259,194,298,214
+5,0.57820505,Motor,186,133,341,176

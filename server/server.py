@@ -58,7 +58,32 @@ def print_error():
     
     print(f"Error: {error} for device {device_id}")
     return "Error received"
+   
+@app.route("/started", methods=['POST'])
+def started():
+    if not request.json or 'device_id' not in request.json: 
+        abort(400)
+    device_id = request.json['device_id']
     
+    print(f"Device {device_id} started")
+    print("Enter which script you want to run")
+    print("1: Camera Controller")
+    print("2: Camera Adjuster")
+    
+    choice = input("Enter the number of your choice: ")
+    valid = False
+    while not valid:
+        if choice == '1':
+            print("Starting Camera Controller...")
+            valid = True
+        elif choice == '2':
+            print("Starting Camera Adjuster...")
+            valid = True    
+        else:
+            print("Invalid choice, please try again.")
+        
+        
+    return choice
      
 def run_server_api():
     app.run(host='0.0.0.0', port=8080)
@@ -66,3 +91,4 @@ def run_server_api():
   
 if __name__ == "__main__":     
     run_server_api()
+    
