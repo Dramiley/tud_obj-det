@@ -133,6 +133,8 @@ if __name__ == '__main__':
     # Create image checker object, with min and max brightness, may need to be adjusted
     image_checker = ImageChecker(50, 200, 70)
     
+    image_Fullscreen.run_loop()
+    
     try:
         while True:
             # Take photo
@@ -181,6 +183,7 @@ if __name__ == '__main__':
             if box_drawer.check_new_csv():
                 box_drawer.run('image.csv')
                 image_Fullscreen.updateImage(Image.open('image.csv_out.png'))
+                #image_Fullscreen.updateImage(Image.open('image.csv_out.png'))
                 
             # Sleep after each iteration
             sleep(sleep_time)
