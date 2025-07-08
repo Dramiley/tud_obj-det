@@ -110,24 +110,29 @@ class boxDrawer:
         self.last_csv = 0
         
 # modified function from object_detection.utils.visualization_utils
-    def draw_bounding_box(self,image, xmin, xmax, ymin, ymax, thickness, display_str_list):
+    def draw_bounding_box(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness, blinking):
         box_color = random.choice(["red", "green", "blue", "purple", "orange"])
         box=[xmin, ymin, xmax, ymax]
         draw = ImageDraw.Draw(image)
+        if not blinking:
+            blinking_draw = ImageDraw.Draw(blinking_image)
         im_width, im_height = image.size
         (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
-        #draw.line([(left, top), (left, bottom), (right, bottom),
-        #(right, top), (left, top)], width=thickness, fill=self.box_color)
+
         draw.rectangle(box, outline=box_color, width=thickness, fill=box_color)
+        if not blinking:
+            blinking_draw.rectangle(box, outline=box_color, width=thickness, fill=box_color)
            
         
-    def add_text(self,image, xmin, xmax, ymin, ymax, thickness, display_str_list):
+    def add_text(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness, display_str_list, blinking):
         (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
         try:
             font = ImageFont.truetype('arial.ttf', 18)
         except IOError:
             font = ImageFont.load_default()
         draw = ImageDraw.Draw(image)
+        if not blinking:
+            blinking_draw = ImageDraw.Draw(blinking_image)
         text_bottom = top
         # Reverse list and print from bottom to top.
         for display_str in display_str_list[::-1]:
@@ -143,49 +148,45 @@ class boxDrawer:
                     check = True
                 else:
                     font = ImageFont.truetype('arial.ttf', font.size - 1)
-                    
+            if not blinking:
+                blinking_draw.text([left + margin, (top + bottom) / 2],
+                display_str,
+                fill=self.text_color,
+                font=font)        
             draw.text([left + margin, (top + bottom) / 2],
                 display_str,
                 fill=self.text_color,
                 font=font)
-            #draw.text(
-            #    (left + margin, text_bottom - text_height - margin),
-            #    display_str,
-            #    fill=self.text_color,
-            #    font=font)
+            
             text_bottom -= text_height - 2 * margin
             
             avg_x = (xmin + xmax) / 2
             avg_y = (ymin + ymax) / 2
             size = 2
             
-    def add_outlines(self,image, xmin, xmax, ymin, ymax, thickness, display_str_list):
+    def add_outlines(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness):
         (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
         box_edge = random.choice(["none", "dashed", "dotted", "solid"])
         outline_color = random.choice(["red", "green", "blue", "purple", "orange"])
-        print(f"Box edge style: {box_edge}")   
+
         if box_edge == "none":
             pass
         else:
             d = DashedImageDraw(image)
+            bd = DashedImageDraw(blinking_image)
             if box_edge == "dashed":
+                bd.dashed_rectangle([(left, top), (right, bottom)], dash = (5, 3), outline  = outline_color, width = 4)
                 d.dashed_rectangle([(left, top), (right, bottom)], dash = (5, 3), outline  = outline_color, width = 4)
             elif box_edge == "dotted":
+                bd.dashed_rectangle([(left, top), (right, bottom)], dash = (1, 1), outline  = outline_color, width = 4)
                 d.dashed_rectangle([(left, top), (right, bottom)], dash = (1, 1), outline  = outline_color, width = 4)
             elif box_edge == "solid":
                 draw = ImageDraw.Draw(image)
+                blinking_draw = ImageDraw.Draw(blinking_image)
+                blinking_draw.rectangle([(left, top), (right, bottom)], outline= outline_color, width=4, fill=None)
                 draw.rectangle([(left, top), (right, bottom)], outline= outline_color, width=4, fill=None)
+                    
                 
-    def add_blinking_box(self, image, xmin, xmax, ymin, ymax, thickness, display_str_list):
-        (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
-        draw = ImageDraw.Draw(image)
-        threshold = 0.6  # Adjust this threshold as needed
-        if random.uniform(0, 1) >= threshold:
-            # Draw a blinking box
-            draw.rectangle([(left, top), (right, bottom)], outline=None, width=thickness, fill= "black")
-        
-            
-        
     def check_new_csv(self):
         if os.path.isfile("image.csv"):
             if os.path.getmtime("image.csv") > self.last_csv:
@@ -195,9 +196,17 @@ class boxDrawer:
 
     def run(self, csv_path):
         image = Image.new('RGB', (512, 512), (0, 0, 0))
+        blinking_image = Image.new('RGB', (512, 512), (0, 0, 0))
+        threshold = 0.6  # Adjust this threshold as needed
+        blinking_indices = []
+                
         try:
             df = pd.read_csv(csv_path)
             df.columns = ['numbers','detection_scores','class', 'x min', 'y min', 'x max', 'y max']
+
+            df['sizes'] = (df['x max'] - df['x min']) * (df['y max'] - df['y min'])
+            
+            df = df.sort_values(by='sizes', ascending=True)
 
             classes = df['class']
             det_scores = df['detection_scores']
@@ -206,24 +215,25 @@ class boxDrawer:
             x_max = df['x max']
             y_max = df['y max']
 
-            sizes = []
             for i in range(len(classes)):
-                sizes.append((x_max[i] - x_min[i]) * (y_max[i] - y_min[i]))
-            
-            df['sizes'] = sizes
-            
-            df = df.sort_values(by='sizes', ascending=False)
-            
-            for i in range(len(classes)):
-                name = classes[i]
-            
-                self.draw_bounding_box(image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (name,''))
-                self.add_outlines(image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (name,''))
-            
-            for i in range(len(classes)):
-                name = classes[i]
+                if random.uniform(0, 1) >= threshold:
+                    blinking_indices.append(i)
                 
-                self.add_text(image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (name,''))
+            for i in range(len(classes)):
+                name = classes[i]
+                blinking = True
+                if i not in blinking_indices:
+                    blinking = False
+                self.draw_bounding_box(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, blinking)
+                self.add_outlines(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4)
+            
+            for i in range(len(classes)):
+                name = classes[i]
+                blinking = True
+                if i not in blinking_indices:
+                    blinking = False
+                
+                self.add_text(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (name,''), blinking)
                 
             
                
@@ -231,17 +241,12 @@ class boxDrawer:
             pass
         
         if self.resize:
-            new_image = image.resize((1640, 1232))
+            image = image.resize((1640, 1232))
+            blinking_image = blinking_image.resize((1640, 1232))
             
-        new_image.save(f'{csv_path}_out.png')
+        image.save(f'{csv_path}_out.png')
+        blinking_image.save(f'{csv_path}2_out.png')
         
-        for i in range(len(classes)):
-            self.add_blinking_box(image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (classes[i], ''))
-        
-        if self.resize:
-            new_image = image.resize((1640, 1232))
-        
-        new_image.save(f'{csv_path}2_out.png')
     
 
 if __name__ == "__main__":

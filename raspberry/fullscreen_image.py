@@ -27,8 +27,9 @@ class imageFullscreen:
     def run_loop(self):
         while self.running:
             self.updateImage(Image.open('image.csv_out.png'))
-            time.sleep(0.5)
+            time.sleep(0.25)
             self.updateImage(Image.open('image.csv2_out.png'))
+            time.sleep(0.25)
 
     def close(self):
         self.running = False
