@@ -101,17 +101,15 @@ class DashedImageDraw(ImageDraw.ImageDraw):
 
 
 class boxDrawer:
-    def __init__(self, device_id, server_url,box_color, text_color, resize):
+    def __init__(self, device_id, server_url, text_color, resize):
         self.device_id = device_id
         self.server_url = server_url
-        self.box_color = box_color
         self.text_color = text_color
         self.resize = resize
         self.last_csv = 0
         
 # modified function from object_detection.utils.visualization_utils
-    def draw_bounding_box(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness, blinking):
-        box_color = random.choice(["red", "green", "blue", "purple", "orange"])
+    def draw_bounding_box(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness, blinking, box_color):
         box=[xmin, ymin, xmax, ymax]
         draw = ImageDraw.Draw(image)
         if not blinking:
@@ -164,10 +162,8 @@ class boxDrawer:
             avg_y = (ymin + ymax) / 2
             size = 2
             
-    def add_outlines(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness):
+    def add_outlines(self,image, blinking_image, xmin, xmax, ymin, ymax, thickness, outline_color, box_edge):
         (left, right, top, bottom) = (xmin, xmax, ymin, ymax)
-        box_edge = random.choice(["none", "dashed", "dotted", "solid"])
-        outline_color = random.choice(["red", "green", "blue", "purple", "orange"])
 
         if box_edge == "none":
             pass
@@ -188,21 +184,19 @@ class boxDrawer:
                     
                 
     def check_new_csv(self):
-        if os.path.isfile("image.csv"):
-            if os.path.getmtime("image.csv") > self.last_csv:
-                self.last_csv = os.path.getmtime("image.csv")
+        if os.path.isfile("boxes.csv"):
+            if os.path.getmtime("boxes.csv") > self.last_csv:
+                self.last_csv = os.path.getmtime("boxes.csv")
                 return True
         return False
 
     def run(self, csv_path):
         image = Image.new('RGB', (512, 512), (0, 0, 0))
         blinking_image = Image.new('RGB', (512, 512), (0, 0, 0))
-        threshold = 0.6  # Adjust this threshold as needed
-        blinking_indices = []
                 
         try:
             df = pd.read_csv(csv_path)
-            df.columns = ['numbers','detection_scores','class', 'x min', 'y min', 'x max', 'y max']
+            df.columns = ['numbers','detection_scores','class', 'x min', 'y min', 'x max', 'y max', 'box color', 'blinking', 'box edge', 'outline color']
 
             df['sizes'] = (df['x max'] - df['x min']) * (df['y max'] - df['y min'])
             
@@ -214,26 +208,21 @@ class boxDrawer:
             y_min = df['y min']
             x_max = df['x max']
             y_max = df['y max']
-
-            for i in range(len(classes)):
-                if random.uniform(0, 1) >= threshold:
-                    blinking_indices.append(i)
+            box_color = df['box color']
+            blinking = df['blinking']
+            box_edge = df['box edge']
+            outline_color = df['outline color']
                 
             for i in range(len(classes)):
                 name = classes[i]
-                blinking = True
-                if i not in blinking_indices:
-                    blinking = False
-                self.draw_bounding_box(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, blinking)
-                self.add_outlines(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4)
+
+                self.draw_bounding_box(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, blinking[i], box_color[i])
+                self.add_outlines(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, outline_color[i], box_edge[i])
             
             for i in range(len(classes)):
                 name = classes[i]
-                blinking = True
-                if i not in blinking_indices:
-                    blinking = False
                 
-                self.add_text(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (name,''), blinking)
+                self.add_text(image, blinking_image, x_min[i], x_max[i], y_min[i], y_max[i], 4, (name,''), blinking[i])
                 
             
                
@@ -256,4 +245,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     drawer = boxDrawer("Test", None, None, args.text_color, True)
-    drawer.run('image.csv')
+    drawer.run('boxes.csv')

@@ -75,7 +75,6 @@ if __name__ == '__main__':
     config_data = read_config()
     sleep_time = config_data['sleep_time']
     server_url = config_data['server_url']
-    box_color = config_data['box_color']
     text_color = config_data['text_color']
     resize = config_data['resize']
     check_brightness = config_data['check_brightness']
@@ -137,7 +136,7 @@ if __name__ == '__main__':
     image_Fullscreen.run_loop()
     
     # listen for assistant requests
-    assistant_requestor = assistantRequestor(device_id, server_url)
+    assistant_requestor = assistantRequestor(device_id, server_url, text_color, resize)
     assistant_requestor.request_assistant()
     
     
