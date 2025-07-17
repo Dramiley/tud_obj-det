@@ -18,6 +18,7 @@ from fullscreen_image import imageFullscreen
 from generate_box_image import boxDrawer
 from image_checker import ImageChecker
 from camera_adjuster import CameraAdjuster
+from assistant_requestor import assistantRequestor
 
 def read_config():
     # Create a ConfigParser object
@@ -134,6 +135,11 @@ if __name__ == '__main__':
     image_checker = ImageChecker(50, 200, 70)
     
     image_Fullscreen.run_loop()
+    
+    # listen for assistant requests
+    assistant_requestor = assistantRequestor(device_id, server_url)
+    assistant_requestor.request_assistant()
+    
     
     try:
         while True:

@@ -1,0 +1,7 @@
+Unnamed: 0,detection_scores,class,x min,y min,x max,y max ,box color,blinking,box edge,outline color
+0,0.99522185,Sicherung,169,265,219,313,orange,True,dashed,orange
+1,0.98621166,Schleifscheibe,309,109,386,200,red,True,none,red
+2,0.9519511,Schleifscheibe,92,107,167,225,green,False,dashed,orange
+3,0.8985869,Lampe,204,54,322,101,purple,False,solid,blue
+4,0.62035424,Schalter,259,194,298,214,purple,False,solid,green
+5,0.57820475,Motor,186,133,341,176,blue,True,dashed,orange

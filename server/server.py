@@ -7,6 +7,7 @@ from PIL import Image
 from time import sleep
 import pandas
 import os
+import time
 
 
 from flask import Flask, request, jsonify, abort
@@ -50,20 +51,13 @@ def safe_image():
     return csvFile.to_json(orient='records')
  
  
-@app.route("/assistent", methods=['POST'])
-def assistent():
-    if not request.json or 'device_id' not in request.json: 
-        abort(400)
-    device_id = request.json['device_id']
-    if last_modified is None and f'{device_id}.boxes.csv' in os.listdir('input'):
-        last_modified = os.path.getmtime(f"input/{device_id}.boxes.csv")
-        
-    else:
+@app.route("/assistent/<device_id>", methods=['GET'])
+def assistent(device_id):
+    connected_time = time.time()
     # run LLM-assistent
-        while not f'{device_id}.boxes.csv' in os.listdir('input') or (last_modified >= os.path.getmtime(f"input/{device_id}.boxes.csv")):
-            sleep(1)
+    while not f'{device_id}.boxes.csv' in os.listdir('input') or (connected_time >= os.path.getmtime(f"input/{device_id}.boxes.csv")):
+        sleep(1)
             
-    last_modified = os.path.getmtime(f"input/{device_id}.boxes.jpg")
     csvFile = pandas.read_csv(f'input/{device_id}.jpg.csv')
         
     return csvFile.to_json(orient='records')
