@@ -2,7 +2,11 @@
 
 ## Usage
 ### Running the server:
-1. run the object-detection docker-container
+1. run the object-detection docker-container with:
+```console
+server:~$ docker pull ghcr.io/dramiley/object_detection:latest
+server:~$ docker run -ti -v <path of inputfolder>:/input ghcr.io/dramiley/object_detection:latest
+```
 2. run the add_box_instructions.py script
 3. run the server.py script
 
