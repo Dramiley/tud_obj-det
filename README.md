@@ -1,4 +1,4 @@
-# <img width="700" height="100" alt="🖥_Server" src="https://github.com/user-attachments/assets/400da72f-0939-45d6-a185-54d1e1e45069" />
+# <img width="830" height="100" alt="🖥_Server" src="https://github.com/Dramiley/tud_obj-det/blob/main/server_banner.png" />
 
 ## Usage
 ### Running the server:
