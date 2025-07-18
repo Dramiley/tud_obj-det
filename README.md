@@ -1,6 +1,11 @@
 # <img width="700" height="100" alt="🖥_Server" src="https://github.com/user-attachments/assets/400da72f-0939-45d6-a185-54d1e1e45069" />
 
 ## Usage
+### Running the server:
+1. run the object-detection docker-container
+2. run the add_box_instructions.py script
+3. run the server.py script
+
 ### API description:
 #### /objectdetection (POST)
 Request-Data: request.json including:
@@ -11,7 +16,7 @@ Request-Data: request.json including:
 Server answers with corresponding csv-file containing the detections 
 
 #### /assistant<device_id> (GET)
-- device_id gets passed over the url\
+- device_id gets passed over the url
 - e.g. /assistant?device_id=73er8dasndeu31
 
 Server answers with visualisation instructions inside a csv-file
@@ -23,8 +28,8 @@ Request-Data: request.json including:
 
 Server answers with a confirmation
 
-#### /started (POST)
-Request-Data: request.json including:
-- device_id
+#### /started<device_id> (GET)
+- device_id gets passed over the url
+- e.g. /started?device_id=73er8dasndeu31
 
-Server answers with the chosen mode
+Server answers with the chosen mode (1 for object-detection, 2 for camera position calibration)
