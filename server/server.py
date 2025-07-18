@@ -58,7 +58,7 @@ def assistent(device_id):
     while not f'{device_id}.boxes.csv' in os.listdir('input') or (connected_time >= os.path.getmtime(f"input/{device_id}.boxes.csv")):
         sleep(1)
             
-    csvFile = pandas.read_csv(f'input/{device_id}.jpg.csv')
+    csvFile = pandas.read_csv(f"input/{device_id}.boxes.csv")
         
     return csvFile.to_json(orient='records')
 @app.route("/error", methods=['POST'])

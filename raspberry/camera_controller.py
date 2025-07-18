@@ -90,8 +90,8 @@ if __name__ == '__main__':
     print("Waiting for server to start...")
     # recieve respond choice (camera controller or camera adjuster)
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    payload = json.dumps({"started": True, "device_id": device_id})
-    response = requests.post(f''+server_url+'/started', data=payload, headers=headers)
+    #payload = json.dumps({"started": True, "device_id": device_id})
+    response = requests.get(f''+server_url+'/started?device_id='+device_id, headers=headers)
     choice = response.text
     
     if choice == '1':

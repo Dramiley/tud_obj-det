@@ -15,7 +15,7 @@ class assistantRequestor:
         box_drawer = boxDrawer(self.device_id, self.server_url, self.text_color, self.resize)
         while True:
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-            response = requests.get(f''+self.server_url+'/assistent', headers=headers)
+            response = requests.get(f''+self.server_url+'/assistent?device_id='+self.device_id, headers=headers)
             
             try:
                 data = response.json()     
